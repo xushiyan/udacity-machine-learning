@@ -596,13 +596,18 @@ Testing set has 95 samples.
 <h4 id="Nearest-Neighbors">Nearest Neighbors<a class="anchor-link" href="#Nearest-Neighbors">&#182;</a></h4><p>General application: help desk system (real-time classification).</p>
 <p>Strengths</p>
 <ul>
-<li>Efficient in training (lazy learning)</li>
+<li>Lazy learning (efficient)</li>
+<li>Does not require training (simply stores all data)</li>
 </ul>
 <p>Weaknesses</p>
 <ul>
-<li>Cost more space (needs to remember all data)</li>
+<li>Cost more space (needs to store all data)</li>
+<li>Inefficient in learning new class (needs to query all data)</li>
+<li>Being more susceptible to the curse of dimensionality</li>
 </ul>
-<p>For parametric model, the reason to choose SVM is because SVM is good at handling high dimensional dataset as the student dataset has 48 features (pre-processed). For non-parametric model, decision tree and KNN are both fairly good candidates for classification problems.</p>
+<p>Given the student dataset, SVM seems to be a good candidate as it can well handle high-dimensional dataset as the given one has 48 features after pre-processing. It would be computationally expensive in training compare to other two candidates (Decision Tree and kNN), however, the given dataset has a small sample size (less than 400) thus would not be a problem here. Even if the sample size grows several magnitudes, the long training time could still be worthy as good results are more important in this use case (be able to identify accurately which student needs help).</p>
+<p>kNN is fast in learning but slow in querying. Still, given the small sample size in this case, the slowness would not be a big problem. kNN may suffer from curse of dimensionality as given dataset has many feature but relatively small sample size. However, intuitively, kNN may give good results as students who fail to graduate usually share something in common, such as parents' education levels being low, hanging out too often, etc. Thus, it is reasonable to give a try on kNN as those common things could be reflected on data points being "neighbors", which are well-suited for kNN.</p>
+<p>Decision Tree are efficient in both learning and querying. It may not be as fast as kNN in learning but still much faster than SVM. Thus it could be a potential choice if a much larger dataset (say 1 million) of students are to be processed. Performance-wise, well-learned if/else condition checks could intuitively solve the problem. For example, if past failed classes are more than 3 and going out with friends are also frequent, then it is reasonable to predict the student failing to graducate. Decision Tree's tendency towards overfitting could be addressed by regularization measures like leave pruning.</p>
 
 </div>
 </div>
@@ -986,7 +991,7 @@ F1 score for test set: 0.7801.
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Answer: </strong></p>
 <p>Support Vector Machine is supposed to work in this way: given the existing student dataset, SVM is able to learn and draw a decision boundry among those data points, each of which represents a student in the dataset. The boundry is deemed to be robust because it tries to be as far away as possible to most of student data points on both sides. SVM treats all students that fall on one side the boundry as failing to graduate, and on the other side as succeed to.</p>
-<p>When a new set of a student's data is given and the prediction is to be carried out for this student, SVM will take this set of data as input and do computations to put this data point on one side the decision boundry, hence to tell whether the student is able to graducate or not. The outcome will be around 80% accurate based on previous experiments.</p>
+<p>When a new set of a student's data is given and the prediction is to be carried out for this student, SVM will take this set of data as input and use a similarity measure to decide on which side of the boundary this student should fall to, hence to tell whether the student is able to graducate or not. The outcome will be around 80% accurate based on previous experiments.</p>
 
 </div>
 </div>
