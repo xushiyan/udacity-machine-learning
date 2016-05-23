@@ -295,7 +295,7 @@ It is a classification problem.</p>
 <span class="n">n_failed</span> <span class="o">=</span> <span class="n">student_data</span><span class="p">[</span><span class="n">student_data</span><span class="o">.</span><span class="n">passed</span> <span class="o">==</span> <span class="s1">&#39;no&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1"># TODO: Calculate graduation rate</span>
-<span class="n">grad_rate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_passed</span><span class="p">)</span><span class="o">/</span><span class="n">n_students</span>
+<span class="n">grad_rate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_passed</span><span class="p">)</span><span class="o">/</span><span class="n">n_students</span> <span class="o">*</span> <span class="mi">100</span>
 
 <span class="c1"># Print the results</span>
 <span class="k">print</span> <span class="s2">&quot;Total number of students: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_students</span><span class="p">)</span>
@@ -319,7 +319,7 @@ It is a classification problem.</p>
 Number of features: 30
 Number of students who passed: 265
 Number of students who failed: 130
-Graduation rate of the class: 0.67%
+Graduation rate of the class: 67.09%
 </pre>
 </div>
 </div>
@@ -990,8 +990,15 @@ F1 score for test set: 0.7801.
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Answer: </strong></p>
-<p>Support Vector Machine is supposed to work in this way: given the existing student dataset, SVM is able to learn and draw a decision boundry among those data points, each of which represents a student in the dataset. The boundry is deemed to be robust because it tries to be as far away as possible to most of student data points on both sides. SVM treats all students that fall on one side the boundry as failing to graduate, and on the other side as succeed to.</p>
-<p>When a new set of a student's data is given and the prediction is to be carried out for this student, SVM will take this set of data as input and use a similarity measure to decide on which side of the boundary this student should fall to, hence to tell whether the student is able to graducate or not. The outcome will be around 80% accurate based on previous experiments.</p>
+<p>Support Vector Machine is supposed to work in this way: given the existing student dataset, SVM is able to learn and draw a decision boundry among those data points, each of which represents a student in the dataset. The boundry is deemed to be robust because it tries to be as far away as possible to data points on both sides. SVM treats all students that fall on one side of the boundry as failing to graduate, and on the other side as succeed to.</p>
+<p><img src="SVM_2.png"></p>
+<p>As illustrated in the diagram above, those student data points that are closest to the boundary are called <code>support vectors</code> because, as the name suggests, those points are <em>supporting</em> us to define the decision boundary such that the margin shown in the diagram is maximised.</p>
+<p>It may not be possible to simply draw a straight line to separate failing and non-failing students. As shown in the right diagram below, we may need to draw a circle as decision boundary. In this case, we can map those data points 
+onto a higher dimension (show on the left) and then our decision boundary becomes a plane, which separates student data points nicely as the line boundry does. The margin maximisation characteristic still holds for the plane boundary.</p>
+<p><img src="data_2d_to_3d_hyperplane.png"></p>
+<p>The mapping is done based on some similarity measure. In the above case, those points that are within the circle are deemed to be similar and those outside are too. Hence, using some mathematical function, we are able to set a threshold to decide whether a data point is inside or not. In our use case, the threshold could tell whether a student is more similar to ones from failing group or non-failing group.</p>
+<p>When a new set of a student's data is given and the prediction is to be carried out for this student, SVM will take this set of data as input and use some similarity measure to decide on which side of the boundary this student should fall to, hence to tell whether the student is able to graducate or not. The outcome will be around 80% accurate based on previous experiments.</p>
+<p><em>Ref: diagrams are kindly provided by last reviewer</em></p>
 
 </div>
 </div>
