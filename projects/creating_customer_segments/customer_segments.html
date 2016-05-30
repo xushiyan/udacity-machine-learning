@@ -387,7 +387,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span class="c1"># TODO: Select three indices of your choice you wish to sample from the dataset</span>
@@ -486,10 +486,39 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Answer:</strong>
-Sample 0: Milk, Grocery and Detergents_Paper spending are very large compare to other features. Fresh, Frozen and Deli are also relatively large compare to sample 1. It looks like a supermarket.</p>
-<p>Sample 1: Spending is mostly on Fresh and Frozen. Compare to sample 0 and 2, its Deli spending is also large. Also Detergents spending being very low could imply that t buys those for cleaning purpose not for re-selling like supermarkets. It could be a restaurant.</p>
-<p>Sample 2: All categories spending are relatively small compare to the other two samples except Grocery spending is larger than sample 1's. Among features other than Grocery, Milk is serveral times large as others. We could infer that it might be a cafe that sells mostly milky drinks like cappuccino and high Grocery spending is necessary for buying cups, mugs and other tools.</p>
+<p><strong>Answer:</strong></p>
+<h4 id="Sample-0">Sample 0<a class="anchor-link" href="#Sample-0">&#182;</a></h4><ul>
+<li>Milk expenditure is 2.12 std above mean</li>
+<li>Grocery expenditure is 2.21 std above mean</li>
+<li>Detergents_Paper expenditure is 2.24 std above mean</li>
+</ul>
+<p>Above covers 89% of its total expenditure.</p>
+<ul>
+<li>Fresh expenditure is 0.56 std below mean</li>
+<li>Frozen expenditure is 0.26 std below mean</li>
+<li>Delicatessen expenditure is 0.13 std below mean</li>
+</ul>
+<p>It is reasonable to infer that this could be a supermarket, which sells large amount of milk, grocery, detergents and paper products. Fresh, frozen and deli can also be found in supermarket but not as major products.</p>
+<h4 id="Sample-1">Sample 1<a class="anchor-link" href="#Sample-1">&#182;</a></h4><ul>
+<li>Fresh expenditure is 3.49 std above mean</li>
+<li>Frozen expenditure is 1.43 std above mean</li>
+<li>Delicatessen expenditure is 0.49 std above mean</li>
+</ul>
+<p>Above covers 98% of its total expenditure.</p>
+<ul>
+<li>Milk, Grocery and Detergents_Paper expenditures are all below 25 percentile mark</li>
+</ul>
+<p>It is reasonable to infer that this could be a restaurant, which consumes mostly fresh food. Some frozen and deli are also required sometimes. Low expenditures (2%) on milk, grocery detergents and paper indicate that those are either minor products or self-use goods.</p>
+<h4 id="Sample-2">Sample 2<a class="anchor-link" href="#Sample-2">&#182;</a></h4><ul>
+<li>Fresh expenditure is 0.93 std below mean</li>
+<li>Milk expenditure is 0.69 std below mean</li>
+<li>Grocery expenditure is 0.62 std below mean</li>
+<li>Frozen expenditure is 0.58 std below mean</li>
+<li>Detergents_Paper expenditure is 0.57 std below mean</li>
+<li>Delicatessen expenditure is 0.5 std below mean</li>
+</ul>
+<p>Milk and Grocery cover 79% of its total expenditure.</p>
+<p>It is reasonable to infer that this could be a cafe, which sells mostly milky drinks like cappuccino and needs to use a lot of groceries like cups, mugs and other tools. In addition, all its expenditure are very small (at least 0.5 std below mean) compare to other samples in the dataset, this strengthens the inference of cafe, which has a much smaller scale of business than a restaurant or a supermarket.</p>
 
 </div>
 </div>
@@ -516,7 +545,7 @@ Sample 0: Milk, Grocery and Detergents_Paper spending are very large compare to 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span class="c1"># TODO: Make a copy of the DataFrame, using the &#39;drop&#39; function to drop the given feature</span>
@@ -573,8 +602,16 @@ Sample 0: Milk, Grocery and Detergents_Paper spending are very large compare to 
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Answer:</strong>
-<code>Grocery</code> is the feature to be predicted and the prediction score is <code>0.749</code>. This feature is necessary for identifying spending habits. Supermarkets usually buy a lot of groceries and if groceries spending is outstandingly high, it means that the customer is probably a supermarket. And being a supermarket means it will probably also spend on other categories as well but with different proportion. But it alone may not be sufficient to identify other type of customers like restaurants, which mostly spend on fresh and frozen.</p>
+<p><strong>Answer:</strong></p>
+<p><code>Grocery</code> is the feature to be predicted and the prediction score is <code>0.749</code>.</p>
+<p>Buying milk, detergents and paper products are already considered as buying groceries. Hence there should be a strong relevancy between expenditure on <code>Grocery</code> and <code>Detergents_Paper</code>, and <code>Grocery</code> and <code>Milk</code>. Furthermore, the coefficient of determination for <code>Detergents_Paper</code> is <code>0.477</code> and for <code>Milk</code> is <code>0.411</code>,  which confirms that some relevancy exhibited but not as strong as <code>Grocery</code> since <code>Detergents_Paper</code> and <code>Milk</code> are subsets of <code>Grocery</code>.</p>
+<p>Coefficient of determination</p>
+<ul>
+<li><code>Fresh</code> is <code>-0.111</code></li>
+<li><code>Frozen</code> is <code>0.046</code></li>
+<li><code>Delicatessen</code> is <code>-0.991</code></li>
+</ul>
+<p>This indicates that there is almost none relevancy for these three features. Therefore, <code>Grocery</code> alone is not sufficient to identifying all customers' spending habits.</p>
 
 </div>
 </div>
@@ -2371,9 +2408,9 @@ Ny7+WPF7swAAAABJRU5ErkJggg==
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Answer:</strong>
-Although data are not normally distributed and most data points lie in lower left corner, it can be observed that <code>Grocery ~ Detergents_Paper</code>, <code>Grocery ~ Milk</code> and <code>Grocery ~ Detergents_Paper</code> are exhibiting correlation as the data points are scattering around a linear line, which implies growth in <code>Grocery</code> also results in some growth in <code>Detergents_Paper</code> and <code>Milk</code>. Other pairing diagrams are not so obvious in this manner: one feature could be large with the other feature being either large or small.</p>
-<p>This confirms my suspicions about <code>Grocery</code> being a relevant feature.</p>
+<p><strong>Answer:</strong></p>
+<p>Although data are not normally distributed and most data points lie in lower left corner, it can be observed that <code>Grocery ~ Detergents_Paper</code>, <code>Grocery ~ Milk</code> and <code>Grocery ~ Detergents_Paper</code> are exhibiting correlation as the data points are scattering around a linear line, which implies growth in <code>Grocery</code> also results in some growth in <code>Detergents_Paper</code> and <code>Milk</code>. Other pairing diagrams are not exhibiting this manner: one feature could be large with the other feature being either large or small (e.g., <code>Fresh ~ Grocery</code>) or one feature could be varying while the other not changing too much (e.g., <code>Fresh ~ Delicatessen</code>).</p>
+<p>The above analysis confirms my suspicions about <code>Grocery</code> being a relevant feature for <code>Milk</code> and <code>Detergents_Paper</code> but not relevant for <code>Fresh</code>, <code>Frozen</code> and <code>Delicatessen</code>.</p>
 
 </div>
 </div>
@@ -7390,8 +7427,8 @@ zKw/vh/eFsBqM/v0vCcT8oOQzgV8eVAfX/c9wGbn3Ngg6hduQj0PHvf/w1eObxz6/wRRt3AU6nlw
 Variance explained in total by the first and second principal component is <code>0.719</code>. And <code>0.9314</code> by first four principal components.</p>
 <p>High value in 1st dimension represents customers who mostly spend on Milk, Grocery, Detergents_Paper and some small portion on Delicatessen. Spending on Fresh and Frozen would be relatively small.</p>
 <p>High value in 2nd dimension represents customers who mostly spend on Fresh, Frozen, Delicatessen and some small portion on the other categories.</p>
-<p>High value in 3rd dimension represents customers who mostly spend on Fresh and Detergents_Paper. Spending extremely little on Delicatessen and somewhat little on Frozen. Influence from other categories will be very small.</p>
-<p>High value in 4th dimension represents customers who mostly spend on Frozen and some small portion on Detergents_Paper. Spending extremely little on Delicatessen and somewhat little on Fresh. Influence from other categories will be very small.</p>
+<p>Absolute value of 3rd dimension is dominated by Fresh and Deli. Only when either Fresh spending being high and Deli being low or the other way round, the 3rd dimension will have high absolute value. Similar influential manner can be found on Detergents_Paper and Frozen except they have less weight on the final value. Same goes to Milk and Grocery pair except that their weights are even smaller and negligible.</p>
+<p>Absolute value of 4th dimension is dominated by Frozen and Deli. Only when either Frozen spending being high and Deli being low or the other way round, the 4th dimension will have high absolute value. Similar influential manner can be found on Fresh and Detergents_Paper except they have less weight on the final value. Influence from Milk and Grocery categories are small and negligible.</p>
 
 </div>
 </div>
@@ -8717,11 +8754,9 @@ AAiN/w+yU8zynzbkDQAAAABJRU5ErkJggg==
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Answer:</strong></p>
-<ul>
-<li>Segment 0 could represent supermarkets</li>
-<li>Segment 1 could represent restaurants</li>
-<li>Segment 2 could represent cafes</li>
-</ul>
+<h4 id="Segment-0-could-represent-supermarkets">Segment 0 could represent supermarkets<a class="anchor-link" href="#Segment-0-could-represent-supermarkets">&#182;</a></h4><p>The most representative feature for supermarkets is grocery, which is  supermarkets' major products. The mean grocery spending (9557) is above the population's mean (7951.277273) and hence this could be supermarkets.</p>
+<h4 id="Segment-1-could-represent-restaurants-(majority)-and-cafes-(minority)">Segment 1 could represent restaurants (majority) and cafes (minority)<a class="anchor-link" href="#Segment-1-could-represent-restaurants-(majority)-and-cafes-(minority)">&#182;</a></h4><p>Fresh (9806), frozen(2216) and deli(721) covers 73.6% of total spending, which is a strong indicator of restaurants. These three spending are below the population means(12000 for fresh, 3071 for frozen and 1524 for deli), which indicates that there are some non-restaurant samples in the cluster that lower the means for these categories. There could be minority of cafes, which are usually low in fresh, frozen and deli spendings. The majority samples are still restaurants.</p>
+<h4 id="Segment-2-could-represent-cafes-(majority)-and-restaurants-(minority)">Segment 2 could represent cafes (majority) and restaurants (minority)<a class="anchor-link" href="#Segment-2-could-represent-cafes-(majority)-and-restaurants-(minority)">&#182;</a></h4><p>Milk(2244) and Grocery(3455) cover 57.8% of total spending, which is a strong indicator of cafes. In addition, all these features are far below population means, which is reasonable for small scale business like cafes. Given that fresh (2432) spending exceeds milk's, this could indicate that some minority samples are restaurants that consume mostly much more fresh products than cafes and result in raising the mean of fresh.</p>
 
 </div>
 </div>
@@ -8776,8 +8811,8 @@ Sample point 2 predicted to be in Cluster 2
 <p><strong>Answer:</strong></p>
 <ul>
 <li>Sample point 0 predicted to be in Cluster 0, which represents supermarkets.</li>
-<li>Sample point 1 predicted to be in Cluster 1, which represents restaurants.</li>
-<li>Sample point 2 predicted to be in Cluster 2, which represents cafes.</li>
+<li>Sample point 1 predicted to be in Cluster 1, which represents restaurants (majority) and cafes (minority).</li>
+<li>Sample point 2 predicted to be in Cluster 2, which represents cafes (majority) and restaurants (minority).</li>
 </ul>
 <p>These are consistent with previous predictions.</p>
 
@@ -8809,9 +8844,15 @@ Sample point 2 predicted to be in Cluster 2
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Answer:</strong>
-I would suggest test on customers from Segment 0 supermarkets and Segment 1 restaurants.</p>
-<p>Distributor delivering less frequently means customers would change to buy more frozen products and less fresh and delicatessen because normally fresh and delicatessen are to be consumed within one day. If distributor only delivers 3 times within a week, it will be very likely that more fresh and delicatessen would exceed expiry date before consumed. Hence, restaurants and supermarkets will get larger impact from this change than cafes as the formers spent more on fresh, frozen and delicatessen and the latter mostly spends on milk and groceries. In addition, cafes are usually spending much less than the other two types of establishments.</p>
+<p><strong>Answer:</strong></p>
+<p>Distributor delivering less frequently means customers would change to buy more frozen products and less fresh and delicatessen because normally fresh and delicatessen are to be consumed within one day. If distributor only delivers 3 times within a week, it will be very likely that more fresh and delicatessen would exceed expiry date before consumed.</p>
+<p>Hence we should run A/B tests on customers who have the biggest percentage of expenditure on fresh, frozen and delicatessen. And the percentage for segments are as below:</p>
+<ul>
+<li>Segment 0: 31.2%</li>
+<li>Segment 1: 73.6%</li>
+<li>Segment 2: 36.1%</li>
+</ul>
+<p>Therefore, it is suggested that segment 1 (majority restaurants) as testing group is the best choice since changing frequency will have the largest impact to this group of customers. It is expected that after changing from 5 times to 3 times per week, the spending on frozen would increase and spending on fresh and deli would decrease.</p>
 
 </div>
 </div>
@@ -8833,7 +8874,9 @@ I would suggest test on customers from Segment 0 supermarkets and Segment 1 rest
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><strong>Answer:</strong>
-As discussed in answer to Question 10, changing delivery frequency will impact segments of customers to different extent. Assume the distributor wants to personalize its customer's delivery frequency based on their spending patterns. The clustering results could become an input feature and influence the frequency. For supermarkets and restaurants, deliveries per week should be more as fresh and deli has a big ratio in their total spending. For cafes, most of the spending are long lasting goods (even milk can be stored for a week) hence deliveries per week could be less.</p>
+As discussed in answer to Question 10, changing delivery frequency will impact segments of customers to different extent. Assume the distributor wants to personalize its customer's delivery frequency based on their spending patterns. The clustering results could become an input feature and influence the frequency.</p>
+<p>Specifically, let's call this new input feature <code>Segment</code> and it has three values 0, 1 and 2 indicating three clusters identified previously. The new output feature to be predicted is <code>Weekly deliveries</code>, which is a positive continuous number. Hence, this becomes a regression problem with 7 inputs (previous 6 spending features and 1 segment info) and 1 output (weekly deliveries). The continuous number for deliveries will be rounded up or down accordingly.</p>
+<p>When fresh and deli expenditure are high, there would be more weekly deliveries. If the segment happens to be 1 (majority restaurants), then delivery times will increase further as customers from this segment would prefer more fresh and deli. If the segment happens to be 0 or 2, then delivery times will not increase (or increase a bit or even decrease depends on the trained model) as customers are not affected that much as segment 1 customers do. There will be a certain weight associated with each segment to influence the delivery times.</p>
 
 </div>
 </div>
@@ -9676,9 +9719,9 @@ ALFBAAIAAAAQG/8fKvSoBDNHMbEAAAAASUVORK5CYII=
 <p><strong>Answer:</strong>
 The clustering algorithm and number of clusters gave a very good result that matches to the underlying distribution.  Red dots mostly covers cluster 1 and 2 (restaurants and cafes), and green dots covers cluster 0 (supermarkets).</p>
 <p>Segment 2 cafes are almost purely <em>"Hotels/Restaurants/Cafes"</em>. Probably by removing some outliers can achieve pure classification for this.</p>
-<p>The classifications are consistent with previous definition of customer segments:</p>
+<p>The classifications are consistent with previous definition of customer segments except that hotel are not included in previous predictions:</p>
 <ul>
-<li><strong>Channel Hotel/Restaurant/Cafe</strong> matches <strong>Segment 1 restaurants</strong> and <strong>Segment 2 cafes</strong></li>
+<li><strong>Channel Hotel/Restaurant/Cafe</strong> matches <strong>Segment 1 restaurants (majority)</strong> and <strong>Segment 2 cafes (majority)</strong></li>
 <li><strong>Channel Retailer</strong> matches <strong>Segment 0 supermarkets</strong>.</li>
 </ul>
 
