@@ -48,15 +48,14 @@ class LearningAgent(Agent):
 
         # TODO: Learn policy based on state, action, reward
         state_action = (self.state, action)
-        gamma = 0.5 - t * 0.005
+        gamma = 0.5 - t * 0.01 if t <= 50 else 0
         if self.previous_state_action is not None and self.previous_reward is not None:
             self.qtable[self.previous_state_action] = self.previous_reward + gamma * max(qvalues.values())
 
         self.previous_state_action = state_action
         self.previous_reward = reward
 
-        if reward < 0:
-            print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
+        print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
 
 def run():
