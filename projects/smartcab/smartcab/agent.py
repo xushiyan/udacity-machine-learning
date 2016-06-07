@@ -48,8 +48,9 @@ class LearningAgent(Agent):
 
         # TODO: Learn policy based on state, action, reward
         state_action = (self.state, action)
+        gamma = 0.5 - t * 0.005
         if self.previous_state_action is not None and self.previous_reward is not None:
-            self.qtable[self.previous_state_action] = self.previous_reward + 0.8 * max(qvalues.values())
+            self.qtable[self.previous_state_action] = self.previous_reward + gamma * max(qvalues.values())
 
         self.previous_state_action = state_action
         self.previous_reward = reward
