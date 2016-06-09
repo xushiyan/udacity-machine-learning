@@ -15,6 +15,8 @@ class LearningAgent(Agent):
         self.qtable = defaultdict(int)
         self.previous_state_action = None
         self.previous_reward = None
+        self.success_trials = 0
+        self.trials = 0
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
@@ -22,6 +24,10 @@ class LearningAgent(Agent):
         self.qtable[self.previous_state_action] = self.previous_reward
         self.previous_state_action = None
         self.previous_reward = None
+        self.trials += 1
+
+    def get_success_rate_info(self):
+        return "{}/{} = {}%".format(self.success_trials, self.trials, round(float(self.success_trials)/self.trials, 3) * 100)
 
     def update(self, t):
         # Gather inputs
@@ -34,23 +40,31 @@ class LearningAgent(Agent):
         self.state = (inputs['light'], ideal_next)
 
         # TODO: Select action according to your policy
-        # action = random.choice((None, 'forward', 'left', 'right')) # random action
         qvalues = defaultdict(int)
         for a in (None, 'forward', 'left', 'right'):
             qkey = (self.state, a)
             qvalues[qkey] = self.qtable[qkey]
 
-        max_q_state_action = [key for max_q in [max(qvalues.values())] for key,q in qvalues.iteritems() if q == max_q]
-        action = random.choice(max_q_state_action)[1]
+        epsilon = 1./self.trials # decay epsilon
+        if random.random() < epsilon:
+            # exploration
+            action = random.choice((None, 'forward', 'left', 'right'))
+        else:
+            # exploitation
+            max_q_state_action = [key for max_q in [max(qvalues.values())] for key,q in qvalues.iteritems() if q == max_q]
+            # when there are more than one best actions given by policy, randomly choose one
+            action = random.choice(max_q_state_action)[1]
 
         # Execute action and get reward
         reward = self.env.act(self, action)
 
         # TODO: Learn policy based on state, action, reward
         state_action = (self.state, action)
-        gamma = 0.5 - t * 0.01 if t <= 50 else 0
+        gamma = 0.2
+        alpha = 0.5
         if self.previous_state_action is not None and self.previous_reward is not None:
-            self.qtable[self.previous_state_action] = self.previous_reward + gamma * max(qvalues.values())
+            q_old = self.qtable[self.previous_state_action]
+            self.qtable[self.previous_state_action] = q_old + alpha * (self.previous_reward + gamma * max(qvalues.values()) - q_old)
 
         self.previous_state_action = state_action
         self.previous_reward = reward
@@ -74,6 +88,7 @@ def run():
     sim.run(n_trials=100)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
+    print "LearningAgent overall success rate: {}".format(a.get_success_rate_info())
 
 if __name__ == '__main__':
     run()
