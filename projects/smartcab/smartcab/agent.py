@@ -17,6 +17,7 @@ class LearningAgent(Agent):
         self.previous_reward = None
         self.success_trials = 0
         self.trials = 0
+        self.total_penalty = 0
         self.total_reward = 0
 
     def reset(self, destination=None):
@@ -29,6 +30,9 @@ class LearningAgent(Agent):
 
     def get_success_rate_info(self):
         return "{}/{} = {}%".format(self.success_trials, self.trials, round(float(self.success_trials)/self.trials, 3) * 100)
+
+    def get_average_penalty(self):
+        return round(float(self.total_penalty)/self.trials, 3)
 
     def get_average_reward(self):
         return round(float(self.total_reward)/self.trials, 3)
@@ -61,12 +65,15 @@ class LearningAgent(Agent):
 
         # Execute action and get reward
         reward = self.env.act(self, action)
-        self.total_reward += reward
+        if reward < 0:
+            self.total_penalty += reward
+        else:
+            self.total_reward += reward
 
         # TODO: Learn policy based on state, action, reward
         state_action = (self.state, action)
-        gamma = 0.9
-        alpha = 0.1
+        gamma = 0.2
+        alpha = 0.5
         if self.previous_state_action is not None and self.previous_reward is not None:
             q_old = self.qtable[self.previous_state_action]
             self.qtable[self.previous_state_action] = q_old + alpha * (self.previous_reward + gamma * max(qvalues.values()) - q_old)
@@ -93,7 +100,8 @@ def run():
     sim.run(n_trials=100)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
-    print "LearningAgent overall success rate: {}\n\taverage reward per trial: {}".format(a.get_success_rate_info(), a.get_average_reward())
+    print "LearningAgent\noverall success rate:\t\t{}\naverage penalty per trial:\t{}\naverage reward per trial:\t{}"\
+    .format(a.get_success_rate_info(), a.get_average_penalty(), a.get_average_reward())
 
 if __name__ == '__main__':
     run()
