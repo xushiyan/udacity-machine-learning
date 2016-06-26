@@ -32,7 +32,8 @@ class Robot(object):
 
         # wall info
         # 1 is open, 0 is closed
-        self.walls = np.full((maze_dim,maze_dim), {'u':1,'r':1,'d':1,'l':1}, dtype=object)
+        walls = [[{'u':1,'r':1,'d':1,'l':1} for i in range(maze_dim)] for j in range(maze_dim)]
+        self.walls = np.array(walls)
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
         # cost info
