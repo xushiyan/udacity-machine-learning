@@ -32,9 +32,13 @@ class Robot(object):
 
         # wall info
         # 1 is open, 0 is closed
-        walls = [[{'u':1,'r':1,'d':1,'l':1} for i in range(maze_dim)] for j in range(maze_dim)]
-        self.walls = np.array(walls)
+        self.walls = np.full((maze_dim,maze_dim), {'u':1,'r':1,'d':1,'l':1}, dtype=object)
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
+
+        # cost info
+        self.costs = np.full((maze_dim,maze_dim), -1, dtype=int)
+        self.costs[tuple(self.location)] = 0
+
 
     def can_transit(self, side):
         wall = self.walls[tuple(self.location)]
@@ -113,13 +117,13 @@ class Robot(object):
 
     def get_maze(self):
         n = len(self.walls)
-        maze = [[0 for i in range(n)] for j in range(n)]
+        maze = np.zeros((n,n),dtype=int)
         for i in range(n):
             for j in range(n):
                 wall = self.walls[i][j]
                 maze[i][j] = wall['u']*1 + wall['r']*2 + wall['d']*4 + wall['l']*8
 
-        return np.array(maze)
+        return maze
 
 
 
