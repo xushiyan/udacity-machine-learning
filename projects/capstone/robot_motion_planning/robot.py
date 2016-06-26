@@ -37,13 +37,21 @@ class Robot(object):
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
         # cost info
-        self.costs = np.full((maze_dim,maze_dim), -1, dtype=int)
-        self.costs[tuple(self.location)] = 0
+        # self.costs = np.full((maze_dim,maze_dim), -1, dtype=int)
+        # self.costs[tuple(self.location)] = 0
 
 
-    def can_transit(self, side):
-        wall = self.walls[tuple(self.location)]
+    def can_transit(self, side, from_loc=None):
+        if from_loc is None:
+            from_loc = tuple(self.location)
+        wall = self.walls[from_loc]
         return wall[side] == 1
+
+    def compute_location_for_transit(self, side, from_loc=None):
+        if from_loc is None:
+            from_loc = tuple(self.location)
+        new_loc = (from_loc[0] + dir_move[side][0], from_loc[1] + dir_move[side][1])
+        return new_loc
 
     def compute_motion_for_transit(self, side):
         heading_i = wall_sides.index(self.heading)
@@ -126,7 +134,58 @@ class Robot(object):
 
         return maze
 
+    def is_goal(self,location):
+        dim = len(self.walls)
+        goal_bounds = [dim/2 - 1, dim/2]
+        return (location[0] in goal_bounds and location[1] in goal_bounds)
 
+    def is_inside_maze(self,location):
+        dim = len(self.walls)
+        x_inside = location[0]>=0 and location[0]<dim
+        y_inside = location[1]>=0 and location[1]<dim
+        return (x_inside and y_inside)
+
+    def search_cost(self):
+
+        n = len(self.walls)
+        step_cost = 1
+        start = tuple(self.location)
+
+        visited = np.zeros((n,n), dtype=int)
+        visited[start] = 1
+
+        costs = np.full((n,n), -1, dtype=int)
+        costs[start] = 0
+
+        g = 0
+
+        openlist = [[g, start]]
+
+        found = False
+        while not found:
+            if len(openlist) == 0:
+                raise "Error: openlist becomes emtpy!"
+
+            else:
+                openlist.sort(reverse=True)
+                next = openlist.pop()
+                g = next[0]
+                loc = next[1]
+
+                costs[loc] = g
+
+                if self.is_goal(loc):
+                    found = True
+                else:
+                    for side in wall_sides:
+                        if self.can_transit(side,from_loc=loc):
+                            loc2 = self.compute_location_for_transit(side,from_loc=loc)
+                            if self.is_inside_maze(loc2) and visited[loc2] == 0:
+                                g2 = g + step_cost
+                                openlist.append([g2, loc2])
+                                visited[loc2] = 1
+
+        return costs
 
     def random_explore(self):
 
@@ -164,12 +223,12 @@ class Robot(object):
         the tester to end the run and return the robot to the start.
         '''
         print "==========================="
+        print "cost map\n{}".format(np.rot90(self.search_cost()))
         rotation = 0
         movement = 0
         self.update_walls(sensors)
         rotation, movement = self.random_explore()
         print "current loc: {} heading: {}".format(self.location, self.heading)
-        print np.rot90(self.get_maze())
         print "next move\tr: {} m: {}".format(rotation, movement)
 
         return rotation, movement
