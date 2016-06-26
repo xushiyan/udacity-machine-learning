@@ -23,12 +23,10 @@ class Robot(object):
         the robot is placed in.
         '''
 
-        self.location = [0, 0]
-        self.heading = 'u'
+        # make sure maze_dim is set first
         self.maze_dim = maze_dim
 
-        # time (in steps) taken for robot to solve the maze
-        self.time = 0
+        self.reset()
 
         # bool indicates whether to explore the maze or navigate to the goal
         self.is_to_explore = True
@@ -38,16 +36,23 @@ class Robot(object):
         self.walls = np.array(walls)
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
+
+    def reset(self):
+        self.location = [0, 0]
+        self.heading = 'u'
+        self.time = 0
+
+        n = self.maze_dim
+
         # path: step squence that robot has taken
-        paths = np.full((maze_dim, maze_dim), -1, dtype=int)
+        paths = np.full((n, n), -1, dtype=int)
         paths[tuple(self.location)] = 0
         self.paths = paths
 
         # path count: how many times the same cell being passed
-        pathCounts = np.full((maze_dim, maze_dim), 0, dtype=int)
+        pathCounts = np.full((n, n), 0, dtype=int)
         pathCounts[tuple(self.location)] = 1
         self.pathCounts = pathCounts
-
 
     def can_transit(self, side, from_loc=None):
         if from_loc is None:
@@ -311,6 +316,7 @@ class Robot(object):
             if self.is_goal():
                 rotation = 'Reset'
                 movement = 'Reset'
+                self.reset()
                 self.is_to_explore = False
             else:
                 self.update_walls(sensors)
