@@ -26,7 +26,18 @@ class Robot(object):
         # make sure maze_dim is set first
         self.maze_dim = maze_dim
 
-        self.reset()
+        heuristic = np.full((maze_dim, maze_dim), 0, dtype=int)
+        center_n = float(maze_dim/2 + maze_dim/2-1)/2
+        for i in range(maze_dim):
+            for j in range(maze_dim):
+                i_abs = abs(i-center_n)
+                j_abs = abs(j-center_n)
+                heuristic[i][j] = int(max(i_abs, j_abs))
+
+        print heuristic
+        self.heuristic = heuristic
+
+        self.init_for_run()
 
         # bool indicates whether to explore the maze or navigate to the goal
         self.is_to_explore = True
@@ -37,7 +48,7 @@ class Robot(object):
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
 
-    def reset(self):
+    def init_for_run(self):
         self.location = [0, 0]
         self.heading = 'u'
         self.time = 0
@@ -205,8 +216,10 @@ class Robot(object):
         costs[start_loc] = 0
 
         g = 0
+        h = self.heuristic[start_loc]
+        f = g + h
 
-        openlist = [[g, start_loc, start_head]]
+        openlist = [[f, g, h, start_loc, start_head]]
 
         found = False
         while not found:
@@ -216,11 +229,13 @@ class Robot(object):
             else:
                 openlist.sort(reverse=True)
                 next = openlist.pop()
-                g = next[0]
-                loc = next[1]
-                head = next[2]
+                f = next[0]
+                g = next[1]
+                h = next[2]
+                loc = next[3]
+                head = next[4]
 
-                costs[loc] = g
+                costs[loc] = f
 
                 if self.is_goal(loc):
                     found = True
@@ -231,15 +246,11 @@ class Robot(object):
                             (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head)
                             if self.is_inside_maze(loc2):
                                 if visited[loc2] == 0: # loc2 has NOT been searched for cost
-                                    # if self.paths[loc2] >= 0: # loc2 has been visited in actual path
-                                    #     g2 = g + past_path_cost
-                                    # elif m1_2 < 0: # need to revese
-                                    #     g2 = g + rev_cost
-                                    # else:
-                                        # g2 = g + step_cost
-                                    g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
 
-                                    openlist.append([g2, loc2, head2])
+                                    g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
+                                    h2 = self.heuristic[loc2]
+                                    f2 = g2 + h2
+                                    openlist.append([f2, g2, h2, loc2, head2])
                                     visited[loc2] = 1
 
 
@@ -314,18 +325,25 @@ class Robot(object):
         movement = 0
         if self.is_to_explore:
             if self.is_goal():
+                print "Exploration time: {}".format(self.time-1)
+
+                print np.rot90(self.paths)
+                print np.rot90(self.pathCounts)
+
                 rotation = 'Reset'
                 movement = 'Reset'
-                self.reset()
+                self.init_for_run()
                 self.is_to_explore = False
             else:
                 self.update_walls(sensors)
                 rotation, movement = self.explore_min_cost()
-                print np.rot90(self.paths)
+                # print np.rot90(self.paths)
                 print "current loc: {} heading: {}".format(self.location, self.heading)
                 print "next move\tr: {} m: {}".format(rotation, movement)
         else:
-            pass
+            # print np.rot90(self.search_cost())
+            import sys
+            sys.exit(0)
 
 
         print "time {}".format(self.time)
