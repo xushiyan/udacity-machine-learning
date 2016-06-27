@@ -39,6 +39,11 @@ class Robot(object):
 
         self.init_for_run()
 
+        # path count: how many times the same cell being passed
+        pathCounts = np.full((maze_dim, maze_dim), 0, dtype=int)
+        pathCounts[tuple(self.location)] = 1
+        self.pathCounts = pathCounts
+
         # bool indicates whether to explore the maze or navigate to the goal
         self.is_to_explore = True
 
@@ -59,11 +64,6 @@ class Robot(object):
         paths = np.full((n, n), -1, dtype=int)
         paths[tuple(self.location)] = 0
         self.paths = paths
-
-        # path count: how many times the same cell being passed
-        pathCounts = np.full((n, n), 0, dtype=int)
-        pathCounts[tuple(self.location)] = 1
-        self.pathCounts = pathCounts
 
     def can_transit(self, side, from_loc=None):
         if from_loc is None:
@@ -216,7 +216,7 @@ class Robot(object):
         costs[start_loc] = 0
 
         g = 0
-        h = self.heuristic[start_loc]
+        h = self.heuristic[start_loc] if self.is_to_explore else 0
         f = g + h
 
         openlist = [[f, g, h, start_loc, start_head]]
@@ -245,13 +245,22 @@ class Robot(object):
                             loc2, head2 = self.compute_position_for_transit(side,from_loc=loc,from_head=head)
                             (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head)
                             if self.is_inside_maze(loc2):
-                                if visited[loc2] == 0: # loc2 has NOT been searched for cost
-
-                                    g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
-                                    h2 = self.heuristic[loc2]
-                                    f2 = g2 + h2
-                                    openlist.append([f2, g2, h2, loc2, head2])
-                                    visited[loc2] = 1
+                                if self.is_to_explore:
+                                    # when explore, append loc2 if it has NOT been searched for cost
+                                    if visited[loc2] == 0:
+                                        g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
+                                        h2 = self.heuristic[loc2]
+                                        f2 = g2 + h2
+                                        openlist.append([f2, g2, h2, loc2, head2])
+                                        visited[loc2] = 1
+                                else:
+                                    # when navigate, only visit those visited cells
+                                    if (self.pathCounts[loc2] > 0) and (visited[loc2] == 0):
+                                        g2 = g + step_cost
+                                        h2 = 0#self.heuristic[loc2]
+                                        f2 = g2 + h2
+                                        openlist.append([f2, g2, h2, loc2, head2])
+                                        visited[loc2] = 1
 
 
 
@@ -341,7 +350,7 @@ class Robot(object):
                 print "current loc: {} heading: {}".format(self.location, self.heading)
                 print "next move\tr: {} m: {}".format(rotation, movement)
         else:
-            # print np.rot90(self.search_cost())
+            print np.rot90(self.search_cost())
             import sys
             sys.exit(0)
 
