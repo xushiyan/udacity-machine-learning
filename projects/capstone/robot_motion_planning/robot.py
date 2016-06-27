@@ -215,7 +215,7 @@ class Robot(object):
         y_inside = location[1]>=0 and location[1]<dim
         return (x_inside and y_inside)
 
-    def search_cost(self):
+    def search_for_cost(self):
 
         assert self.is_to_explore
 
@@ -275,76 +275,53 @@ class Robot(object):
 
         return costs
 
-    def search_action(self):
+    def search_for_policy(self):
 
         assert not self.is_to_explore
 
-        n = len(self.walls)
-        step_cost = 1
-        past_path_cost = 2
-        start_loc = tuple(self.location)
-        start_head = self.heading
+        step_value = 1
+        n = self.maze_dim
+        values = np.array([[[999 for i in range(n)] for j in range(n)] for k in range(4)])
+        policy = np.array([[[(0,0) for i in range(n)] for j in range(n)] for k in range(4)], dtype=tuple)
+        change = True
+        while change:
+            change = False
 
-        visited = np.zeros((n,n), dtype=int)
-        visited[start_loc] = 1
+            for i in range(n):
+                for j in range(n):
+                    for h in range(4):
+                        head = wall_sides[h]
+                        loc = (i, j)
+                        if self.is_goal(loc):
+                            if values[h][i][j] > 0:
+                                values[h][i][j] = 0
+                                change = True
 
-        max_int = np.iinfo(np.int16).max
-        costs = np.full((n,n), max_int, dtype=int)
-        costs[start_loc] = 0
-
-        actions = np.array([[None for i in range(n)] for j in range(n)])
-
-        g = 0
-        h = 0
-        f = g + h
-
-        openlist = [[f, g, h, start_loc, start_head]]
-
-        found = False
-        while not found:
-            if len(openlist) == 0:
-                raise "Error: openlist becomes emtpy!"
-
-            else:
-                openlist.sort(reverse=True)
-                next = openlist.pop()
-                f = next[0]
-                g = next[1]
-                h = next[2]
-                loc = next[3]
-                head = next[4]
-
-                costs[loc] = f
-
-                if self.is_goal(loc):
-                    found = True
-                else:
-                    for side in wall_sides:
-                        for dist in range(1,4):
-                            if self.can_transit(side,from_loc=loc,dist=dist):
-                                loc2, head2 = self.compute_position_for_transit(side,from_loc=loc,from_head=head,dist=dist)
-                                (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head,dist=dist)
-                                if self.is_inside_maze(loc2):
-                                    # when navigate, only visit those visited cells
-                                    if (self.pathCounts[loc2] > 0) and (visited[loc2] == 0):
-                                        g2 = g + step_cost
-                                        h2 = 0
-                                        f2 = g2 + h2
-                                        openlist.append([f2, g2, h2, loc2, head2])
-                                        actions[loc2] = (r1_2, m1_2)
-                                        visited[loc2] = 1
+                        elif self.pathCounts[loc] > 0:
+                            for side in wall_sides:
+                                for dist in (1,2,3):
+                                    if self.can_transit(side,from_loc=loc,dist=dist):
+                                        loc2, head2 = self.compute_position_for_transit(side,from_loc=loc,from_head=head,dist=dist)
+                                        (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head,dist=dist)
+                                        if self.is_inside_maze(loc2) and self.pathCounts[loc2] > 0:
+                                            (i2, j2) = loc2
+                                            h2 = wall_sides.index(head2)
+                                            v2 = values[h2][i2][j2] + step_value
+                                            if v2 < values[h][i][j]:
+                                                values[h][i][j] = v2
+                                                policy[h][i][j] = (r1_2, m1_2)
+                                                change = True
 
 
 
 
 
-        print np.rot90(costs)
-
-        return actions
+        print np.rot90(values)
+        self.policy = policy
 
     def explore_min_cost(self):
 
-        costs = self.search_cost()
+        costs = self.search_for_cost()
 
         sides = []
         for side in wall_sides:
@@ -419,8 +396,7 @@ class Robot(object):
                 movement = 'Reset'
                 self.init_for_run()
                 self.is_to_explore = False
-                actions = self.search_action()
-                self.actions = actions
+                self.search_for_policy()
             else:
                 self.update_walls(sensors)
                 rotation, movement = self.explore_min_cost()
@@ -434,13 +410,12 @@ class Robot(object):
                 rotation = 'Reset'
                 movement = 'Reset'
             else:
-                # for side in wall_sides:
-                #     next_loc, _ = compute_position_for_transit(side)
-                #     action = self.actions[next_loc]
-                #     if action is not None:
-                #         self.transit(action[0], action[1])
-                import sys
-                sys.exit(0)
+                i = self.location[0]
+                j = self.location[1]
+                h = wall_sides.index(self.heading)
+                (rotation, movement) = self.policy[h][i][j]
+                # print "location:{},{}\tpolicy:{},{}".format(i, j, rotation, movement)
+                self.transit(rotation, movement)
 
 
         print "time {}".format(self.time)
