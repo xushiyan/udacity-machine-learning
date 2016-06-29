@@ -69,15 +69,6 @@ class Robot(object):
         self.heuristic = heuristic
 
         '''
-        To record step squence that robot has taken when move to each cell.
-
-        This is useful for debugging A* search.
-        '''
-        paths = np.full((maze_dim, maze_dim), -1, dtype=int)
-        paths[tuple(self.location)] = 0
-        self.paths = paths
-
-        '''
         To record how many times each cell has being passed by robot
         during exploration.
 
@@ -97,6 +88,9 @@ class Robot(object):
         self.walls = np.array(walls)
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
+        # record path sequence for 1st run
+        self.paths = np.full((self.maze_dim, self.maze_dim), 0, dtype=int)
+
     def prepare_2nd_run(self):
         '''Consolidate all initialization for 2nd run.'''
 
@@ -107,17 +101,20 @@ class Robot(object):
         print "Visit counts:"
         print np.rot90(self.pathCounts)
         print "Goal is found at: {}".format(self.goal)
-        print "Exploration time steps: {}".format(self.time-1)
+        print "Exploration time steps: {}".format(self.time)
 
         self.location = [0, 0]
         self.heading = 'u'
         self.time = 0
         self.is_to_explore = False
 
+        # record path sequence for 2nd run
+        self.paths = np.full((self.maze_dim, self.maze_dim), 0, dtype=int)
+
     def can_transit(self, side, from_loc=None, dist=1):
         '''
         Check if robot can transit from one location (`from_loc`) to another via a specific `side`.
-        Default from location is `self.location`.
+        Default from-location is `self.location`.
         Default distance (`dist`) to transit is 1.
         '''
 
@@ -154,6 +151,12 @@ class Robot(object):
         return can
 
     def compute_position_for_transit(self, side, from_loc=None, from_head=None, dist=1):
+        '''
+        Compute robot state (location and heading) after a transition.
+        Default from-location is `self.location`.
+        Default from-heading is `self.heading`.
+        Default distance (`dist`) to transit is 1.
+        '''
         if from_loc is None:
             from_loc = tuple(self.location)
 
@@ -178,6 +181,11 @@ class Robot(object):
         return new_loc, new_head
 
     def compute_motion_for_transit(self, side, from_head=None, dist=1):
+        '''
+        Compute the motion (rotation and movement) needed to transit from current heading via chosen side.
+        Default from-heading is `self.heading`.
+        Default distance (`dist`) to transit is 1.
+        '''
         if from_head is None:
             from_head = self.heading
 
@@ -315,7 +323,7 @@ class Robot(object):
 
     def search_for_cost(self):
         '''
-        Use A* algorithm to
+        Use A* search algorithm to explore the maze and find the goal.
         '''
 
         assert self.is_to_explore
@@ -335,6 +343,7 @@ class Robot(object):
 
         g = 0
         h = self.heuristic[start_loc]
+        # h = 0
         f = g + h
 
         openlist = [[f, g, h, start_loc, start_head]]
@@ -361,12 +370,12 @@ class Robot(object):
                     for side in wall_sides:
                         if self.can_transit(side,from_loc=loc):
                             loc2, head2 = self.compute_position_for_transit(side,from_loc=loc,from_head=head)
-                            (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head)
                             if self.is_inside_maze(loc2):
                                 # when explore, append loc2 if it has NOT been searched for cost
                                 if visited[loc2] == 0:
                                     g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
                                     h2 = self.heuristic[loc2]
+                                    # h2 = 0
                                     f2 = g2 + h2
                                     openlist.append([f2, g2, h2, loc2, head2])
                                     visited[loc2] = 1
@@ -377,20 +386,24 @@ class Robot(object):
         return costs
 
     def search_for_policy(self):
+        '''
+        Use dynamic programming to find optimal policy based on map data gathered in 1st run.
+        '''
 
         assert not self.is_to_explore
 
         step_value = 1
         n = self.maze_dim
-        values = np.array([[[999 for i in range(n)] for j in range(n)] for k in range(4)])
-        policy = np.array([[[(0,0) for i in range(n)] for j in range(n)] for k in range(4)], dtype=tuple)
+        n_sides = len(wall_sides)
+        values = np.array([[[999 for i in range(n)] for j in range(n)] for k in range(n_sides)])
+        policy = np.array([[[(0,0) for i in range(n)] for j in range(n)] for k in range(n_sides)], dtype=tuple)
         change = True
         while change:
             change = False
 
             for i in range(n):
                 for j in range(n):
-                    for h in range(4):
+                    for h in range(n_sides):
                         head = wall_sides[h]
                         loc = (i, j)
                         if self.is_goal(loc):
@@ -403,14 +416,14 @@ class Robot(object):
                                 for dist in (1,2,3):
                                     if self.can_transit(side,from_loc=loc,dist=dist):
                                         loc2, head2 = self.compute_position_for_transit(side,from_loc=loc,from_head=head,dist=dist)
-                                        (r1_2, m1_2) = self.compute_motion_for_transit(side,from_head=head,dist=dist)
+                                        (rot2, mov2) = self.compute_motion_for_transit(side,from_head=head,dist=dist)
                                         if self.is_inside_maze(loc2) and self.pathCounts[loc2] > 0:
                                             (i2, j2) = loc2
                                             h2 = wall_sides.index(head2)
                                             v2 = values[h2][i2][j2] + step_value
                                             if v2 < values[h][i][j]:
                                                 values[h][i][j] = v2
-                                                policy[h][i][j] = (r1_2, m1_2)
+                                                policy[h][i][j] = (rot2, mov2)
                                                 change = True
 
 
@@ -420,9 +433,16 @@ class Robot(object):
         self.policy = policy
 
     def explore_min_cost(self):
+        '''
+        Make a move based with minimum cost to explore.
 
+        Every move is made based on current belief of the maze.
+        '''
+
+        # cost matrix based on current belief
         costs = self.search_for_cost()
 
+        # sides that robot can transit through
         sides = []
         for side in wall_sides:
             if self.can_transit(side):
@@ -434,8 +454,9 @@ class Robot(object):
             side_costs.append(costs[loc])
 
         min_cost = min(side_costs)
+        # find sides indices that have minimum cost
         min_cost_i = [i for i, v in enumerate(side_costs) if v == min_cost]
-
+        # if there are more than one sides, randomly choose one
         side = sides[random.choice(min_cost_i)]
 
         r, m = self.compute_motion_for_transit(side)
@@ -446,16 +467,19 @@ class Robot(object):
 
 
     def random_explore(self):
-
-        r = None
-        m = None
+        '''
+        Randomly explore without cost calculation.
+        '''
+        r = 0
+        m = 0
         while r is None and m is None:
             side = random.choice(wall_sides)
             if self.can_transit(side):
                 r, m = self.compute_motion_for_transit(side)
 
         self.transit(r, m)
-
+        self.paths[tuple(self.location)] = self.time
+        self.pathCounts[tuple(self.location)] += 1
         return r, m
 
 
@@ -481,8 +505,6 @@ class Robot(object):
         the tester to end the run and return the robot to the start.
         '''
 
-        self.time += 1
-        print ">>> Time {}".format(self.time)
 
         rotation = 0
         movement = 0
@@ -493,19 +515,26 @@ class Robot(object):
                 self.prepare_2nd_run()
                 self.search_for_policy()
             else:
+                self.time += 1
+                print ">>> Time {}".format(self.time)
                 self.update_walls(sensors)
+                # rotation, movement = self.random_explore()
                 rotation, movement = self.explore_min_cost()
-                # print np.rot90(self.paths)
                 print "current loc: {} heading: {}".format(self.location, self.heading)
                 print "next move r: {} m: {}".format(rotation, movement)
         else:
+            self.time += 1
+            print ">>> Time {}".format(self.time)
             i = self.location[0]
             j = self.location[1]
             h = wall_sides.index(self.heading)
             (rotation, movement) = self.policy[h][i][j]
             self.transit(rotation, movement)
             print "    At location:({},{}) -> policy:({},{})".format(i, j, rotation, movement)
+            self.paths[tuple(self.location)] = self.time
             if tuple(self.location) == self.goal:
+                print "Path sequences:"
+                print np.rot90(self.paths)
                 print "Navigation time steps: {}".format(self.time)
 
         return rotation, movement
