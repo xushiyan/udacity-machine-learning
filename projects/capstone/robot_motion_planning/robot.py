@@ -116,13 +116,16 @@ class Robot(object):
 
     def can_transit(self, side, from_loc=None, dist=1):
         '''
-
+        Check if robot can transit from one location (`from_loc`) to another via a specific `side`.
+        Default from location is `self.location`.
+        Default distance (`dist`) to transit is 1.
         '''
 
         if from_loc is None:
             from_loc = tuple(self.location)
 
         assert isinstance(from_loc, tuple)
+        assert dist in (1,2,3)
 
         max_dist = dist
         can = (self.walls[from_loc][side] == 1)
@@ -133,12 +136,20 @@ class Robot(object):
                 to_loc = (from_loc[0]+delta_i, from_loc[1]+delta_j)
                 if self.is_inside_maze(to_loc):
                     wall = self.walls[to_loc]
-                    can = can and (wall[dir_reverse[side]]==1) # every cell on that side within dist should open opposite side
-                    if d != max_dist:
-                        can = can and (wall[side]==1) # except farthest cell, all other cells within dist should open the same side
 
-                    if not can: # as soon as one cell has wall blocking the way, stop checking
+                    # every cell on that side within dist should open opposite side
+                    can = can and (wall[dir_reverse[side]]==1)
+                    if d != max_dist:
+                        # except farthest cell, all other cells on that side within dist should open the same side
+                        can = can and (wall[side]==1)
+
+                    if not can:
+                        # as soon as one cell has wall blocking the way, stop checking
                         break
+                else:
+                    # if a cell on that side within dist is out of maze, stop checking
+                    can = False
+                    break
 
         return can
 
@@ -151,6 +162,8 @@ class Robot(object):
 
         assert isinstance(from_loc, tuple)
         assert isinstance(from_head, str)
+        assert dist in (1,2,3)
+
 
         new_loc = (from_loc[0] + dir_move[side][0]*dist, from_loc[1] + dir_move[side][1]*dist)
         new_head = None
@@ -169,6 +182,7 @@ class Robot(object):
             from_head = self.heading
 
         assert isinstance(from_head, str)
+        assert dist in (1,2,3)
 
         heading_i = wall_sides.index(from_head)
         side_i = wall_sides.index(side)
@@ -184,6 +198,12 @@ class Robot(object):
             raise "Invalid heading {} and side {}".format(from_head, side)
 
     def transit(self, rotation, movement):
+        '''
+        Make actual changes to robot's state (location and heading).
+
+        The logic is taken from tester.py to maintain robot state consistency.
+        '''
+
         # perform rotation
         if rotation == -90:
             self.heading = dir_sensors[self.heading][0]
@@ -218,8 +238,11 @@ class Robot(object):
                     movement = 0
 
     def update_walls(self, sensors):
-        # print "sensors: {}".format(sensors)
-        current_cell = self.walls[tuple(self.location)]
+        '''
+        Update walls matrix using distance data from sensor data.
+        '''
+
+        # get actual sides in cell's coordinate from robot heading
         sides = dir_sensors[self.heading]
 
         for i in range(3):
@@ -228,20 +251,36 @@ class Robot(object):
             loc = list(self.location)
             while dist > 0:
                 cell = self.walls[tuple(loc)]
-                cell[side] = 1 # side open
-                if loc != self.location:
-                    cell[dir_reverse[side]] = 1 # side open
+                cell[side] = 1 # no wall on that side
+                if loc == self.location:
+                    # if it is current cell, no info on opposite side
+                    pass
+                else:
+                    # has no wall on opposite side
+                    cell[dir_reverse[side]] = 1
                 loc[0] += dir_move[side][0]
                 loc[1] += dir_move[side][1]
                 dist -= 1
 
+            # this is the cell with the wall that sensor hits on
+            # could be current cell when dist == 0
+            # could be another cell when dist > 0
             walled_cell = self.walls[tuple(loc)]
-            walled_cell[side] = 0 # side closed
-            if loc != self.location:
-                walled_cell[dir_reverse[side]] = 1 # side open
+            walled_cell[side] = 0 # has wall on that side
+            if loc == self.location:
+                # if it is current cell, no info on opposite side
+                pass
+            else:
+                # has no wall on opposite side
+                walled_cell[dir_reverse[side]] = 1
 
     def get_maze(self):
-        n = len(self.walls)
+        '''
+        Tranform walls matrix into maze matrix containing the same numbers as in the input data file.
+
+        Useful for debugging.
+        '''
+        n = self.maze_dim
         maze = np.zeros((n,n),dtype=int)
         for i in range(n):
             for j in range(n):
@@ -251,23 +290,33 @@ class Robot(object):
         return maze
 
     def is_goal(self,location=None):
+        '''
+        Check if a location is within goal area.
+
+        Default location is robot's current location.
+        '''
+
         if location is None:
             location = self.location
 
-        dim = len(self.walls)
-        goal_bounds = [dim/2 - 1, dim/2]
+        goal_bounds = [self.maze_dim/2 - 1, self.maze_dim/2]
         return (location[0] in goal_bounds and location[1] in goal_bounds)
 
     def is_inside_maze(self,location):
-
+        '''
+        Check if a location is inside a maze or not.
+        '''
         assert isinstance(location, tuple)
 
-        dim = len(self.walls)
-        x_inside = location[0]>=0 and location[0]<dim
-        y_inside = location[1]>=0 and location[1]<dim
+        x_inside = (location[0]>=0 and location[0]<self.maze_dim)
+        y_inside = (location[1]>=0 and location[1]<self.maze_dim)
+
         return (x_inside and y_inside)
 
     def search_for_cost(self):
+        '''
+        Use A* algorithm to
+        '''
 
         assert self.is_to_explore
 
