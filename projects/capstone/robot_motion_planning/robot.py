@@ -328,7 +328,7 @@ class Robot(object):
 
         assert self.is_to_explore
 
-        n = len(self.walls)
+        n = self.maze_dim
         step_cost = 1
         past_path_cost = 2
         start_loc = tuple(self.location)
