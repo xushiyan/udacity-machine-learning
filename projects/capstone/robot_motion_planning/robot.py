@@ -91,16 +91,17 @@ class Robot(object):
         # record path sequence for 1st run
         self.paths = np.full((self.maze_dim, self.maze_dim), 0, dtype=int)
 
+        # if once visited goal, set to True
+        self.visited_goal = False
+
+
     def prepare_2nd_run(self):
         '''Consolidate all initialization for 2nd run.'''
 
-        # goal location found by 1st run
-        self.goal = tuple(self.location)
         print "Path sequences:"
         print np.rot90(self.paths)
         print "Visit counts:"
         print np.rot90(self.pathCounts)
-        print "Goal is found at: {}".format(self.goal)
         print "Exploration time steps: {}".format(self.time)
 
         self.location = [0, 0]
@@ -110,6 +111,22 @@ class Robot(object):
 
         # record path sequence for 2nd run
         self.paths = np.full((self.maze_dim, self.maze_dim), 0, dtype=int)
+
+    def has_sufficient_map_info(self,cover_ratio):
+        '''
+        Check if robot has sufficient map info by calculating
+        ratio = visited cells / totoal cells
+        '''
+        visited_cells = 0
+        n = self.maze_dim
+        for i in range(n):
+            for j in range(n):
+                if self.pathCounts[i][j] > 0:
+                    visited_cells += 1
+
+        covered = float(visited_cells) /(n*n)
+        print "covered {0:.1f} %".format(covered * 100)
+        return covered > cover_ratio
 
     def can_transit(self, side, from_loc=None, dist=1):
         '''
@@ -374,7 +391,8 @@ class Robot(object):
                                 # when explore, append loc2 if it has NOT been searched for cost
                                 if visited[loc2] == 0:
                                     g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
-                                    h2 = self.heuristic[loc2]
+                                    # turn off heuristic when continue searching after reaching goal
+                                    h2 = 0 if self.visited_goal else self.heuristic[loc2]
                                     # h2 = 0
                                     f2 = g2 + h2
                                     openlist.append([f2, g2, h2, loc2, head2])
@@ -509,7 +527,7 @@ class Robot(object):
         rotation = 0
         movement = 0
         if self.is_to_explore:
-            if self.is_goal():
+            if self.visited_goal and self.has_sufficient_map_info(.9):
                 rotation = 'Reset'
                 movement = 'Reset'
                 self.prepare_2nd_run()
@@ -522,6 +540,10 @@ class Robot(object):
                 rotation, movement = self.explore_min_cost()
                 print "current loc: {} heading: {}".format(self.location, self.heading)
                 print "next move r: {} m: {}".format(rotation, movement)
+                if self.is_goal():
+                    # goal location found by 1st run
+                    print "Goal is found at: {}".format(tuple(self.location))
+                    self.visited_goal = True
         else:
             self.time += 1
             print ">>> Time {}".format(self.time)
@@ -532,7 +554,7 @@ class Robot(object):
             self.transit(rotation, movement)
             print "    At location:({},{}) -> policy:({},{})".format(i, j, rotation, movement)
             self.paths[tuple(self.location)] = self.time
-            if tuple(self.location) == self.goal:
+            if self.is_goal(tuple(self.location)):
                 print "Path sequences:"
                 print np.rot90(self.paths)
                 print "Navigation time steps: {}".format(self.time)
