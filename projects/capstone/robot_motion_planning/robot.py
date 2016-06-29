@@ -23,52 +23,104 @@ class Robot(object):
         the robot is placed in.
         '''
 
-        # make sure maze_dim is set first
+        self.prepare_1st_run(maze_dim)
+
+
+    def prepare_1st_run(self,maze_dim):
+        '''Consolidate all initialization for 1st run.'''
+
+        # maze dimension
         self.maze_dim = maze_dim
 
+        # initial location
+        self.location = [0, 0]
+
+        # initial heading
+        self.heading = 'u'
+
+        # record time steps for each run
+        self.time = 0
+
+        # bool indicates whether to explore the maze (1st run) or navigate to the goal (2nd run)
+        self.is_to_explore = True
+
+        '''
+        Heuristic matrix looks like this
+        [[5 5 5 5 5 5 5 5 5 5 5 5]
+         [5 4 4 4 4 4 4 4 4 4 4 5]
+         [5 4 3 3 3 3 3 3 3 3 4 5]
+         [5 4 3 2 2 2 2 2 2 3 4 5]
+         [5 4 3 2 1 1 1 1 2 3 4 5]
+         [5 4 3 2 1 0 0 1 2 3 4 5]
+         [5 4 3 2 1 0 0 1 2 3 4 5]
+         [5 4 3 2 1 1 1 1 2 3 4 5]
+         [5 4 3 2 2 2 2 2 2 3 4 5]
+         [5 4 3 3 3 3 3 3 3 3 4 5]
+         [5 4 4 4 4 4 4 4 4 4 4 5]
+         [5 5 5 5 5 5 5 5 5 5 5 5]]
+        '''
         heuristic = np.full((maze_dim, maze_dim), 0, dtype=int)
-        center_n = float(maze_dim/2 + maze_dim/2-1)/2
+        center_n = float(maze_dim-1)/2
         for i in range(maze_dim):
             for j in range(maze_dim):
                 i_abs = abs(i-center_n)
                 j_abs = abs(j-center_n)
                 heuristic[i][j] = int(max(i_abs, j_abs))
-
-        print heuristic
         self.heuristic = heuristic
 
-        self.init_for_run()
+        '''
+        To record step squence that robot has taken when move to each cell.
 
-        # path count: how many times the same cell being passed
+        This is useful for debugging A* search.
+        '''
+        paths = np.full((maze_dim, maze_dim), -1, dtype=int)
+        paths[tuple(self.location)] = 0
+        self.paths = paths
+
+        '''
+        To record how many times each cell has being passed by robot
+        during exploration.
+
+        This matrix will be populated during 1st run, and retained for 2nd run
+        as boundary check.
+
+        Cells not visited at 1st run will be 'closed' down for 2nd run.
+        '''
         pathCounts = np.full((maze_dim, maze_dim), 0, dtype=int)
         pathCounts[tuple(self.location)] = 1
         self.pathCounts = pathCounts
 
-        # bool indicates whether to explore the maze or navigate to the goal
-        self.is_to_explore = True
-
-        # wall info: 1 is open, 0 is closed
+        '''
+        Wall info matrix: 1 is open, 0 is closed.
+        '''
         walls = [[{'u':1,'r':1,'d':1,'l':1} for i in range(maze_dim)] for j in range(maze_dim)]
         self.walls = np.array(walls)
         self.walls[tuple(self.location)] = {'u':1,'r':0,'d':0,'l':0}
 
+    def prepare_2nd_run(self):
+        '''Consolidate all initialization for 2nd run.'''
 
-    def init_for_run(self):
+        # goal location found by 1st run
+        self.goal = tuple(self.location)
+        print "Path sequences:"
+        print np.rot90(self.paths)
+        print "Visit counts:"
+        print np.rot90(self.pathCounts)
+        print "Goal is found at: {}".format(self.goal)
+        print "Exploration time steps: {}".format(self.time-1)
+
         self.location = [0, 0]
         self.heading = 'u'
         self.time = 0
-
-        n = self.maze_dim
-
-        # path: step squence that robot has taken
-        paths = np.full((n, n), -1, dtype=int)
-        paths[tuple(self.location)] = 0
-        self.paths = paths
+        self.is_to_explore = False
 
     def can_transit(self, side, from_loc=None, dist=1):
+        '''
+
+        '''
+
         if from_loc is None:
             from_loc = tuple(self.location)
-
 
         assert isinstance(from_loc, tuple)
 
@@ -81,11 +133,11 @@ class Robot(object):
                 to_loc = (from_loc[0]+delta_i, from_loc[1]+delta_j)
                 if self.is_inside_maze(to_loc):
                     wall = self.walls[to_loc]
-                    can = can and (wall[dir_reverse[side]]==1) # every cell on that side with dist should open reverse side
+                    can = can and (wall[dir_reverse[side]]==1) # every cell on that side within dist should open opposite side
                     if d != max_dist:
-                        can = can and (wall[side]==1) # except farthest cell, other cells should open the same side
+                        can = can and (wall[side]==1) # except farthest cell, all other cells within dist should open the same side
 
-                    if not can:
+                    if not can: # as soon as one cell has wall blocking the way, stop checking
                         break
 
         return can
@@ -316,7 +368,6 @@ class Robot(object):
 
 
 
-        print np.rot90(values)
         self.policy = policy
 
     def explore_min_cost(self):
@@ -380,45 +431,32 @@ class Robot(object):
         the maze) then returing the tuple ('Reset', 'Reset') will indicate to
         the tester to end the run and return the robot to the start.
         '''
-        print "==========================="
+
         self.time += 1
+        print ">>> Time {}".format(self.time)
+
         rotation = 0
         movement = 0
         if self.is_to_explore:
             if self.is_goal():
-                self.goal = tuple(self.location)
-
-                print np.rot90(self.paths)
-                print np.rot90(self.pathCounts)
-                print "Exploration time: {}".format(self.time-1)
-
                 rotation = 'Reset'
                 movement = 'Reset'
-                self.init_for_run()
-                self.is_to_explore = False
+                self.prepare_2nd_run()
                 self.search_for_policy()
             else:
                 self.update_walls(sensors)
                 rotation, movement = self.explore_min_cost()
                 # print np.rot90(self.paths)
                 print "current loc: {} heading: {}".format(self.location, self.heading)
-                print "next move\tr: {} m: {}".format(rotation, movement)
+                print "next move r: {} m: {}".format(rotation, movement)
         else:
-
+            i = self.location[0]
+            j = self.location[1]
+            h = wall_sides.index(self.heading)
+            (rotation, movement) = self.policy[h][i][j]
+            self.transit(rotation, movement)
+            print "    At location:({},{}) -> policy:({},{})".format(i, j, rotation, movement)
             if tuple(self.location) == self.goal:
-                print "Navigation time: {}".format(self.time-1)
-                rotation = 'Reset'
-                movement = 'Reset'
-            else:
-                i = self.location[0]
-                j = self.location[1]
-                h = wall_sides.index(self.heading)
-                (rotation, movement) = self.policy[h][i][j]
-                # print "location:{},{}\tpolicy:{},{}".format(i, j, rotation, movement)
-                self.transit(rotation, movement)
-
-
-        print "time {}".format(self.time)
-
+                print "Navigation time steps: {}".format(self.time)
 
         return rotation, movement
