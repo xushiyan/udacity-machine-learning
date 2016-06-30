@@ -94,6 +94,11 @@ class Robot(object):
         # if once visited goal, set to True
         self.visited_goal = False
 
+        # tuning parameter: visited cell penalty
+        self.visited_cell_penalty = 4
+
+        # tuning parameter: sufficient visit threshold
+        self.sufficient_visit_threshold = 0.
 
     def prepare_2nd_run(self):
         '''Consolidate all initialization for 2nd run.'''
@@ -103,6 +108,7 @@ class Robot(object):
         print "Visit counts:"
         print np.rot90(self.pathCounts)
         print "Exploration time steps: {}".format(self.time)
+        self.exploration_time = self.time + 1
 
         self.location = [0, 0]
         self.heading = 'u'
@@ -112,7 +118,7 @@ class Robot(object):
         # record path sequence for 2nd run
         self.paths = np.full((self.maze_dim, self.maze_dim), 0, dtype=int)
 
-    def has_sufficient_map_info(self,cover_ratio):
+    def has_sufficient_map_info(self):
         '''
         Check if robot has sufficient map info by calculating
         ratio = visited cells / totoal cells
@@ -126,7 +132,7 @@ class Robot(object):
 
         covered = float(visited_cells) /(n*n)
         print "covered {0:.1f} %".format(covered * 100)
-        return covered > cover_ratio
+        return covered > self.sufficient_visit_threshold
 
     def can_transit(self, side, from_loc=None, dist=1):
         '''
@@ -347,7 +353,6 @@ class Robot(object):
 
         n = self.maze_dim
         step_cost = 1
-        past_path_cost = 2
         start_loc = tuple(self.location)
         start_head = self.heading
 
@@ -390,7 +395,7 @@ class Robot(object):
                             if self.is_inside_maze(loc2):
                                 # when explore, append loc2 if it has NOT been searched for cost
                                 if visited[loc2] == 0:
-                                    g2 = g + step_cost + self.pathCounts[loc2] * past_path_cost
+                                    g2 = g + step_cost + self.pathCounts[loc2] * self.visited_cell_penalty
                                     # turn off heuristic when continue searching after reaching goal
                                     h2 = 0 if self.visited_goal else self.heuristic[loc2]
                                     # h2 = 0
@@ -527,7 +532,7 @@ class Robot(object):
         rotation = 0
         movement = 0
         if self.is_to_explore:
-            if self.visited_goal and self.has_sufficient_map_info(.9):
+            if self.visited_goal and self.has_sufficient_map_info():
                 rotation = 'Reset'
                 movement = 'Reset'
                 self.prepare_2nd_run()
@@ -557,6 +562,10 @@ class Robot(object):
             if self.is_goal(tuple(self.location)):
                 print "Path sequences:"
                 print np.rot90(self.paths)
+                self.navigation_time = self.time
                 print "Navigation time steps: {}".format(self.time)
+                with open("results_{}_{}.txt".format(self.visited_cell_penalty,self.sufficient_visit_threshold), "a") as result_file:
+                    result_file.write("{:4.3f}\n".format(self.exploration_time/30. + self.navigation_time))
+
 
         return rotation, movement
