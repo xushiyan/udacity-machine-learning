@@ -1,0 +1,5 @@
+Test run times: 100 threshold: 0.0 -> average score: 46.021
+Test run times: 100 threshold: 0.2 -> average score: 45.230
+Test run times: 100 threshold: 0.4 -> average score: 45.623
+Test run times: 100 threshold: 0.6 -> average score: 41.450
+Test run times: 100 threshold: 0.8 -> average score: 38.801
