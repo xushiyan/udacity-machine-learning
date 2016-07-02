@@ -1,3 +1,27 @@
 # Project 5: Capstone
+## Plot and Navigate a Virtual Maze
 
-The Capstone Project for the Machine Learning Engineer Nanodegree does not have any requirements for code, libraries, or datasets. You are free to choose your project as you wish! For students who are unable to construct a capstone project on their own imagination, a pre-built project has been provided in `robot_motion_planning`.
+### Repository Structure
+- `robot_motion_planning_report.pdf` is the final report file.
+- Folder [robot_motion_planning](robot_motion_planning/) contains all code of this project.
+- Folder [res](res/) contains all resources used in the report.
+
+### How to run code
+
+1. Open a terminal with `python` command available.
+2. `cd` to [robot_motion_planning](robot_motion_planning)
+3. Run single test with
+```
+python tester.py test_maze_01.txt
+```
+to see the output in terminal.
+
+4. Run repeated tests with
+```
+python tester_loop.py test_maze_01.txt
+```
+to see the output appended in [test_maze_01.txt_results.txt](robot_motion_planning/test_maze_01.txt_results.txt)
+
+5. Change possible values of robot's parameter `threshold` in line 31 of [`tester_loop.py`](robot_motion_planning/tester_loop.py) to see different average scores in output files.
+
+6. [`test_maze_01_var.txt`](robot_motion_planning/test_maze_01_var.txt) is the modified version of maze 01 used in free-form visualization.
