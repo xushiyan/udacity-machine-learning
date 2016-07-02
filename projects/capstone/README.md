@@ -2,7 +2,7 @@
 ## Plot and Navigate a Virtual Maze
 
 ### Repository Structure
-- `robot_motion_planning_report.pdf` is the final report file.
+- [robot_motion_planning_report.pdf](robot_motion_planning_report.pdf) is the final report file.
 - Folder [robot_motion_planning](robot_motion_planning/) contains all code of this project.
 - Folder [res](res/) contains all resources used in the report.
 
