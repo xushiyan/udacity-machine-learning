@@ -10,18 +10,16 @@
 
 1. Open a terminal with `python` command available.
 2. `cd` to [robot_motion_planning](robot_motion_planning)
-3. Run single test with
+3. Run single test to see the output in terminal.
 ```
 python tester.py test_maze_01.txt
 ```
-to see the output in terminal.
 
-4. Run repeated tests with
+4. Run repeated tests to see the output appended in [test_maze_01.txt_results.txt](robot_motion_planning/test_maze_01.txt_results.txt)
 ```
 python tester_loop.py test_maze_01.txt
 ```
-to see the output appended in [test_maze_01.txt_results.txt](robot_motion_planning/test_maze_01.txt_results.txt)
 
-5. Change possible values of robot's parameter `threshold` in line 31 of [`tester_loop.py`](robot_motion_planning/tester_loop.py) to see different average scores in output files.
+5. Modify possible values of robot's parameter `threshold` in range of `[0, 10)` at line 31 of [`tester_loop.py`](robot_motion_planning/tester_loop.py) to see different average scores in output files.
 
 6. [`test_maze_01_var.txt`](robot_motion_planning/test_maze_01_var.txt) is the modified version of maze 01 used in free-form visualization.
