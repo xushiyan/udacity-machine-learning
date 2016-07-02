@@ -15,7 +15,7 @@ wall_sides = ('u', 'r', 'd', 'l')
 
 
 class Robot(object):
-    def __init__(self, maze_dim):
+    def __init__(self, maze_dim, visited_cell_penalty=4, sufficient_visit_threshold=0.5):
         '''
         Use the initialization function to set up attributes that your robot
         will use to learn and navigate the maze. Some initial attributes are
@@ -23,14 +23,23 @@ class Robot(object):
         the robot is placed in.
         '''
 
-        self.prepare_1st_run(maze_dim)
-
-
-    def prepare_1st_run(self,maze_dim):
-        '''Consolidate all initialization for 1st run.'''
-
         # maze dimension
         self.maze_dim = maze_dim
+
+        # tuning parameter: visited cell penalty
+        self.visited_cell_penalty = visited_cell_penalty
+
+        # tuning parameter: sufficient visit threshold
+        self.sufficient_visit_threshold = sufficient_visit_threshold
+
+
+        self.prepare_1st_run()
+
+
+    def prepare_1st_run(self):
+        '''Consolidate all initialization for 1st run.'''
+
+        maze_dim = self.maze_dim
 
         # initial location
         self.location = [0, 0]
@@ -94,11 +103,6 @@ class Robot(object):
         # if once visited goal, set to True
         self.visited_goal = False
 
-        # tuning parameter: visited cell penalty
-        self.visited_cell_penalty = 4
-
-        # tuning parameter: sufficient visit threshold
-        self.sufficient_visit_threshold = 0.
 
     def prepare_2nd_run(self):
         '''Consolidate all initialization for 2nd run.'''
@@ -108,7 +112,6 @@ class Robot(object):
         print "Visit counts:"
         print np.rot90(self.pathCounts)
         print "Exploration time steps: {}".format(self.time)
-        self.exploration_time = self.time + 1
 
         self.location = [0, 0]
         self.heading = 'u'
@@ -562,10 +565,7 @@ class Robot(object):
             if self.is_goal(tuple(self.location)):
                 print "Path sequences:"
                 print np.rot90(self.paths)
-                self.navigation_time = self.time
                 print "Navigation time steps: {}".format(self.time)
-                with open("results_{}_{}.txt".format(self.visited_cell_penalty,self.sufficient_visit_threshold), "a") as result_file:
-                    result_file.write("{:4.3f}\n".format(self.exploration_time/30. + self.navigation_time))
 
 
         return rotation, movement
