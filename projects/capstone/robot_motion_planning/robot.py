@@ -15,7 +15,7 @@ wall_sides = ('u', 'r', 'd', 'l')
 
 
 class Robot(object):
-    def __init__(self, maze_dim, visited_cell_penalty=4, sufficient_visit_threshold=0.5):
+    def __init__(self, maze_dim, sufficient_visit_threshold=0.8):
         '''
         Use the initialization function to set up attributes that your robot
         will use to learn and navigate the maze. Some initial attributes are
@@ -25,9 +25,6 @@ class Robot(object):
 
         # maze dimension
         self.maze_dim = maze_dim
-
-        # tuning parameter: visited cell penalty
-        self.visited_cell_penalty = visited_cell_penalty
 
         # tuning parameter: sufficient visit threshold
         self.sufficient_visit_threshold = sufficient_visit_threshold
@@ -76,6 +73,18 @@ class Robot(object):
                 j_abs = abs(j-center_n)
                 heuristic[i][j] = int(max(i_abs, j_abs))
         self.heuristic = heuristic
+
+        inv_heuristic = np.full((maze_dim, maze_dim), 0, dtype=int)
+        center_n = float(maze_dim-1)/2
+        for i in range(maze_dim):
+            for j in range(maze_dim):
+                i_abs = abs(i-center_n)
+                j_abs = abs(j-center_n)
+                inv_heuristic[i][j] = maze_dim/2-int(max(i_abs, j_abs))-1
+        self.inv_heuristic = inv_heuristic
+
+        # penalty multiplier for visiting visited cells
+        self.visited_cell_penalty = maze_dim/2 - 1
 
         '''
         To record how many times each cell has being passed by robot
@@ -400,7 +409,7 @@ class Robot(object):
                                 if visited[loc2] == 0:
                                     g2 = g + step_cost + self.pathCounts[loc2] * self.visited_cell_penalty
                                     # turn off heuristic when continue searching after reaching goal
-                                    h2 = 0 if self.visited_goal else self.heuristic[loc2]
+                                    h2 = self.inv_heuristic[loc2] if self.visited_goal else self.heuristic[loc2]
                                     # h2 = 0
                                     f2 = g2 + h2
                                     openlist.append([f2, g2, h2, loc2, head2])

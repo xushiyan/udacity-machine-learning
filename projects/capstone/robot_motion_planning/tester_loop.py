@@ -2,6 +2,7 @@ from maze import Maze
 from robot import Robot
 import sys
 import numpy as np
+import random
 
 # global dictionaries for robot movement and sensing
 dir_sensors = {'u': ['l', 'u', 'r'], 'r': ['u', 'r', 'd'],
@@ -27,120 +28,118 @@ if __name__ == '__main__':
 
 
     result_dict = {}
-    penalties = (1, 2, 3, 4, 5)
-    threshold = (.0, .2, .4, .6, .8)
+    threshold = [0, 2, 4, 6, 8]
     test_count = 100
+    parameter_list = []
+    for th in threshold:
+        for ct in range(test_count):
+            parameter_list.append(float(th)/10)
 
-    for p in penalties:
-        for th in threshold:
-            for ct in range(test_count):
+    # shuffle parameter tuples
+    random.shuffle(parameter_list)
 
-                # Create a maze based on input argument on command line.
-                maze_id = str(sys.argv[1])
-                testmaze = Maze( maze_id )
+    for th in parameter_list:
+        # Create a maze based on input argument on command line.
+        maze_id = str(sys.argv[1])
+        testmaze = Maze( maze_id )
 
-                # parameters to tune
-                visited_cell_penalty = p
-                sufficient_visit_threshold = th
+        # Intitialize a robot; robot receives info about maze dimensions.
+        testrobot = Robot(testmaze.dim,sufficient_visit_threshold=th)
 
-                # Intitialize a robot; robot receives info about maze dimensions.
-                testrobot = Robot(testmaze.dim,visited_cell_penalty,sufficient_visit_threshold)
+        # Record robot performance over two runs.
+        runtimes = []
+        total_time = 0
+        for run in range(2):
+            print "Starting run {}.".format(run)
 
-                # Record robot performance over two runs.
-                runtimes = []
-                total_time = 0
-                for run in range(2):
-                    print "Starting run {}.".format(run)
+            # Set the robot in the start position. Note that robot position
+            # parameters are independent of the robot itself.
+            robot_pos = {'location': [0, 0], 'heading': 'up'}
 
-                    # Set the robot in the start position. Note that robot position
-                    # parameters are independent of the robot itself.
-                    robot_pos = {'location': [0, 0], 'heading': 'up'}
+            run_active = True
+            hit_goal = False
+            while run_active:
+                # check for end of time
+                total_time += 1
+                if total_time > max_time:
+                    run_active = False
+                    print "Allotted time exceeded."
+                    break
 
-                    run_active = True
-                    hit_goal = False
-                    while run_active:
-                        # check for end of time
-                        total_time += 1
-                        if total_time > max_time:
-                            run_active = False
-                            print "Allotted time exceeded."
-                            break
+                # provide robot with sensor information, get actions
+                sensing = [testmaze.dist_to_wall(robot_pos['location'], heading)
+                           for heading in dir_sensors[robot_pos['heading']]]
+                rotation, movement = testrobot.next_move(sensing)
 
-                        # provide robot with sensor information, get actions
-                        sensing = [testmaze.dist_to_wall(robot_pos['location'], heading)
-                                   for heading in dir_sensors[robot_pos['heading']]]
-                        rotation, movement = testrobot.next_move(sensing)
+                # check for a reset
+                if (rotation, movement) == ('Reset', 'Reset'):
+                    if run == 0 and hit_goal:
+                        run_active = False
+                        runtimes.append(total_time)
+                        print "Ending first run. Starting next run."
+                        break
+                    elif run == 0 and not hit_goal:
+                        print "Cannot reset - robot has not hit goal yet."
+                        continue
+                    else:
+                        print "Cannot reset on runs after the first."
+                        continue
 
-                        # check for a reset
-                        if (rotation, movement) == ('Reset', 'Reset'):
-                            if run == 0 and hit_goal:
-                                run_active = False
-                                runtimes.append(total_time)
-                                print "Ending first run. Starting next run."
-                                break
-                            elif run == 0 and not hit_goal:
-                                print "Cannot reset - robot has not hit goal yet."
-                                continue
-                            else:
-                                print "Cannot reset on runs after the first."
-                                continue
+                # perform rotation
+                if rotation == -90:
+                    robot_pos['heading'] = dir_sensors[robot_pos['heading']][0]
+                elif rotation == 90:
+                    robot_pos['heading'] = dir_sensors[robot_pos['heading']][2]
+                elif rotation == 0:
+                    pass
+                else:
+                    print "Invalid rotation value, no rotation performed."
 
-                        # perform rotation
-                        if rotation == -90:
-                            robot_pos['heading'] = dir_sensors[robot_pos['heading']][0]
-                        elif rotation == 90:
-                            robot_pos['heading'] = dir_sensors[robot_pos['heading']][2]
-                        elif rotation == 0:
-                            pass
+                # perform movement
+                if abs(movement) > 3:
+                    print "Movement limited to three squares in a turn."
+                movement = max(min(int(movement), 3), -3) # fix to range [-3, 3]
+                while movement:
+                    if movement > 0:
+                        if testmaze.is_permissible(robot_pos['location'], robot_pos['heading']):
+                            robot_pos['location'][0] += dir_move[robot_pos['heading']][0]
+                            robot_pos['location'][1] += dir_move[robot_pos['heading']][1]
+                            movement -= 1
                         else:
-                            print "Invalid rotation value, no rotation performed."
+                            print "Movement stopped by wall."
+                            movement = 0
+                    else:
+                        rev_heading = dir_reverse[robot_pos['heading']]
+                        if testmaze.is_permissible(robot_pos['location'], rev_heading):
+                            robot_pos['location'][0] += dir_move[rev_heading][0]
+                            robot_pos['location'][1] += dir_move[rev_heading][1]
+                            movement += 1
+                        else:
+                            print "Movement stopped by wall."
+                            movement = 0
 
-                        # perform movement
-                        if abs(movement) > 3:
-                            print "Movement limited to three squares in a turn."
-                        movement = max(min(int(movement), 3), -3) # fix to range [-3, 3]
-                        while movement:
-                            if movement > 0:
-                                if testmaze.is_permissible(robot_pos['location'], robot_pos['heading']):
-                                    robot_pos['location'][0] += dir_move[robot_pos['heading']][0]
-                                    robot_pos['location'][1] += dir_move[robot_pos['heading']][1]
-                                    movement -= 1
-                                else:
-                                    print "Movement stopped by wall."
-                                    movement = 0
-                            else:
-                                rev_heading = dir_reverse[robot_pos['heading']]
-                                if testmaze.is_permissible(robot_pos['location'], rev_heading):
-                                    robot_pos['location'][0] += dir_move[rev_heading][0]
-                                    robot_pos['location'][1] += dir_move[rev_heading][1]
-                                    movement += 1
-                                else:
-                                    print "Movement stopped by wall."
-                                    movement = 0
+                # check for goal entered
+                goal_bounds = [testmaze.dim/2 - 1, testmaze.dim/2]
+                if robot_pos['location'][0] in goal_bounds and robot_pos['location'][1] in goal_bounds:
+                    hit_goal = True
+                    if run != 0:
+                        runtimes.append(total_time - sum(runtimes))
+                        run_active = False
+                        print "Goal found; run {} completed!".format(run)
 
-                        # check for goal entered
-                        goal_bounds = [testmaze.dim/2 - 1, testmaze.dim/2]
-                        if robot_pos['location'][0] in goal_bounds and robot_pos['location'][1] in goal_bounds:
-                            hit_goal = True
-                            if run != 0:
-                                runtimes.append(total_time - sum(runtimes))
-                                run_active = False
-                                print "Goal found; run {} completed!".format(run)
+        # Report score if robot is successful.
+        if len(runtimes) == 2:
+            final_score = runtimes[1] + train_score_mult*runtimes[0]
+            print "Task complete! Score: {:4.3f}".format(final_score)
 
-                # Report score if robot is successful.
-                if len(runtimes) == 2:
-                    final_score = runtimes[1] + train_score_mult*runtimes[0]
-                    print "Task complete! Score: {:4.3f}".format(final_score)
-
-                    # parameter tuple as key
-                    key = (testrobot.visited_cell_penalty, testrobot.sufficient_visit_threshold)
-                    if key not in result_dict:
-                        result_dict[key] = []
-                    result_dict[key].append(final_score)
+            key = testrobot.sufficient_visit_threshold
+            if key not in result_dict:
+                result_dict[key] = []
+            result_dict[key].append(final_score)
 
     keys = list(result_dict.keys())
     keys.sort()
     for k in keys:
         assert len(result_dict[k]) == test_count
         with open('{}_results.txt'.format(maze_id), 'a') as results:
-            results.write("parameter {}, {:3.2f} -> average score: {:4.3f}\n".format(k[0], k[1], np.mean(result_dict[k])))
+            results.write("Test run times: {} threshold: {:3.1f} -> average score: {:4.3f}\n".format(test_count, k, np.mean(result_dict[k])))
