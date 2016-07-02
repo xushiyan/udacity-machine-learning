@@ -142,4 +142,5 @@ if __name__ == '__main__':
     keys.sort()
     for k in keys:
         assert len(result_dict[k]) == test_count
-        print "parameter {}, {:3.2f} -> average score: {:4.3f}".format(k[0], k[1], np.mean(result_dict[k]))
+        with open('{}_results.txt'.format(maze_id), 'a') as results:
+            results.write("parameter {}, {:3.2f} -> average score: {:4.3f}\n".format(k[0], k[1], np.mean(result_dict[k])))
