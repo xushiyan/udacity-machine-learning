@@ -377,7 +377,6 @@ class Robot(object):
 
         g = 0
         h = self.heuristic[start_loc]
-        # h = 0
         f = g + h
 
         openlist = [[f, g, h, start_loc, start_head]]
@@ -408,9 +407,8 @@ class Robot(object):
                                 # when explore, append loc2 if it has NOT been searched for cost
                                 if visited[loc2] == 0:
                                     g2 = g + step_cost + self.pathCounts[loc2] * self.visited_cell_penalty
-                                    # turn off heuristic when continue searching after reaching goal
+                                    # invert heuristic when continue searching after reaching goal
                                     h2 = self.inv_heuristic[loc2] if self.visited_goal else self.heuristic[loc2]
-                                    # h2 = 0
                                     f2 = g2 + h2
                                     openlist.append([f2, g2, h2, loc2, head2])
                                     visited[loc2] = 1
